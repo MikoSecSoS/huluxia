@@ -5,7 +5,8 @@ import configparser
 
 import requests
 
-from multiprocessing import Pool
+# from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 
 nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
@@ -96,9 +97,10 @@ def main():
 	endId = config.get("config", "endId")
 	thread = config.get("config", "thread")
 	url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}".format(key=key)
-	pool = Pool(int(thread))
-	pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
-
+	# pool = Pool(int(thread))
+	# pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
+	with ThreadPoolExecutor(int(thread)) as p:
+		[p.submit(main, i) for i in range(int(startId), int(endId)+1)]
 
 if __name__ == '__main__':
 	main()
