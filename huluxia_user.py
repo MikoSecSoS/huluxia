@@ -100,7 +100,8 @@ def main():
 	# pool = Pool(int(thread))
 	# pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
 	with ThreadPoolExecutor(int(thread)) as p:
-		[p.submit(main, i) for i in range(int(startId), int(endId)+1)]
+		[p.submit(spider, i) for i in range(int(startId), int(endId)+1)]
+
 
 if __name__ == '__main__':
 	main()
