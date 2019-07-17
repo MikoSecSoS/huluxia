@@ -7,6 +7,8 @@ import requests
 
 from multiprocessing import Pool
 
+nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
 def spider(url, user_id):
 	url = url + "&user_id={user_id}".format(user_id=user_id)
 	userNotFound = '{"msg":"用户不存在","code":104,"title":null,"status":0}'
@@ -16,7 +18,10 @@ def spider(url, user_id):
 		print("ID为{user_id}的用户不存在...".format(user_id))
 		return
 	result = req.text
-	format
+	data = formatData(result)
+	download("UserData_" + nowTime +".txt", data)
+	print("已写入", data)
+	download("SourceUserData_" + nowTime +".txt", result)
 
 def formatData(data):
 	userID = data.get("userID")
@@ -81,8 +86,7 @@ def formatData(data):
 def download(filename, datas):
 	filename = filename.replace("/", "_").replace("\\", "_")
 	with open(filename, "a+") as f:
-		for data in datas:
-			f.write(str(data) + "\n")
+		f.write(str(data) + "\n")
 
 def main():
 	config = configparser.ConfigParser()
@@ -90,9 +94,10 @@ def main():
 	key = config.get("config", "key")
 	startId = config.get("config", "startId")
 	endId = config.get("config", "endId")
+	thread = config.get("config", "thread")
 	url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}".format(key=key)
-	pool = Pool()
-	pool.map(spider, [i for i in range(startId, endId+1)])
+	pool = Pool(50)
+	pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
 
 
 if __name__ == '__main__':
