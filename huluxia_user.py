@@ -8,7 +8,7 @@ import requests
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor
 
-nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+nowTime = time.strftime("%Y-%m-%d", time.localtime())
 config = configparser.ConfigParser()
 config.read("config.ini")
 key = config.get("config", "key")
@@ -19,21 +19,21 @@ key_url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}".format(key
 
 def spider(user_id):
 	url = key_url + "&user_id={user_id}".format(user_id=user_id)
-	userNotFound = '{"msg":"用户不存在","code":104,"title":null,"status":0}'
-	notLogin = "{'msg': '未登录', 'code': 103, 'title': None, 'status': 0}"
+	userNotFound = '{"msg":"用户不存在",'
+	notLogin = "{'msg': '未登录',"
 	header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
 	req = requests.get(url, headers=header)
-	if req.status_code != 200 or req.text == userNotFound:
-		print("ID为 {user_id} 的用户不存在...".format(user_id))
+	if req.status_code != 200 or userNotFound in req.text:
+		print("ID为 {user_id} 的用户不存在...".format(user_id=user_id))
 		return
-	if req.text == notLogin:
+	if notLogin in req.text:
 		print("未登录，请检查key是否正确")
 		return
 	result = req.json()
+	download("SourceUserData_" + nowTime +".txt", result)
 	data = formatData(result)
 	download("UserData_" + nowTime +".txt", data)
 	print("已写入", data)
-	download("SourceUserData_" + nowTime +".txt", result)
 
 def formatData(data):
 	userID = data.get("userID")
@@ -54,13 +54,23 @@ def formatData(data):
 	postCount	= data.get("postCount")
 	commentCount = data.get("commentCount")
 	followingCountFormated = data.get("followingCountFormated")
-	followerCountFormated = data.get("favoriteCount")
+	followerCountFormated = data.get("followerCountFormated")
+	favoriteCount = data.get("favoriteCount")
 	medalList = data.get("medalList")
 	photos = [i.get("url") for i in data.get("photos")]
 	signature = data.get("signature")
-	hometown = [i.get("hometown_province") + " - "+  i.get("hometown_city") for i in data.get("hometown")]
-	workinfo = [i.get("work_industry_detail") + " - "+ i.get("work_company")for i in data.get("workinfo")]
-	schoolInfo = [i.get("school_name") + " - " + i.get("school_name") + "级" for i in data.get("schoolInfo")]
+	try:
+		hometown = [i.get("hometown_province") + " - "+  i.get("hometown_city") for i in data.get("hometown")]
+	except:
+		hometown = "null"
+	try:
+		workinfo = [i.get("work_industry_detail") + " - "+ i.get("work_company")for i in data.get("workinfo")]
+	except:
+		workinfo = "null"
+	try:
+		schoolInfo = [i.get("school_name") + " - " + i.get("school_name") + "级" for i in data.get("schoolInfo")]
+	except:
+		schoolInfo = "null"
 	info = {
 		"签名": signature,
 		"家乡": hometown,
@@ -80,8 +90,8 @@ def formatData(data):
 		"性别": gender,
 		"年龄": age,
 		"头衔": identityTitle,
-		"贡献值": identity,
-		"贡献称号": followingCountFormated,
+		"贡献值": integral,
+		"贡献称号": integralNick,
 		"葫芦": credits,
 		"帖子": postCount,
 		"回复": commentCount,
@@ -92,10 +102,10 @@ def formatData(data):
 		"照片": photos,
 		"个人信息": info,
 		"去过的地方": beenLocations,
-		"标签": favoriteCount
+		"标签": tags
 	}
 
-def download(filename, datas):
+def download(filename, data):
 	filename = filename.replace("/", "_").replace("\\", "_")
 	with open(filename, "a+") as f:
 		f.write(str(data) + "\n")
