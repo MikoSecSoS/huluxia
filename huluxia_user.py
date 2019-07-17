@@ -96,7 +96,7 @@ def main():
 	endId = config.get("config", "endId")
 	thread = config.get("config", "thread")
 	url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}".format(key=key)
-	pool = Pool(thread)
+	pool = Pool(int(thread))
 	pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
 
 
