@@ -10,15 +10,15 @@ from concurrent.futures import ThreadPoolExecutor
 
 nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
-def spider(url, user_id):
-	url = url + "&user_id={user_id}".format(user_id=user_id)
+def spider(key, user_id):
+	url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}&user_id={user_id}".format(key=key, user_id=user_id)
 	userNotFound = '{"msg":"用户不存在","code":104,"title":null,"status":0}'
 	header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
 	req = requests.get(url, headers=header)
 	if req.status_code != 200 or req.text == userNotFound:
 		print("ID为{user_id}的用户不存在...".format(user_id))
 		return
-	result = req.text
+	result = req.json()
 	data = formatData(result)
 	download("UserData_" + nowTime +".txt", data)
 	print("已写入", data)
@@ -96,11 +96,12 @@ def main():
 	startId = config.get("config", "startId")
 	endId = config.get("config", "endId")
 	thread = config.get("config", "thread")
-	url = "http://floor.huluxia.com/user/info/ANDROID/2.1?_key={key}".format(key=key)
 	# pool = Pool(int(thread))
 	# pool.map(spider, [i for i in range(int(startId), int(endId)+1)])
 	with ThreadPoolExecutor(int(thread)) as p:
 		[p.submit(spider, i) for i in range(int(startId), int(endId)+1)]
+	# for i in range(int(startId), int(endId)+1):
+	# 	spider(key, i)
 
 
 if __name__ == '__main__':
